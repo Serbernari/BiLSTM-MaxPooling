@@ -93,7 +93,7 @@ np.random.shuffle(indices)
 history = model.fit(x_train[indices], y_train[indices]-1, epochs=26, batch_size=batch_size, verbose=1, validation_split=0.1)
 
 
-### F1 metrix ###
+### F1 metriс ###
 
 class_list = [i for i in range(18)]
 output = model.predict(x_test)
