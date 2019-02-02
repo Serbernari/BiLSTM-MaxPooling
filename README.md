@@ -1,2 +1,2 @@
 # BiLSTM-MaxPooling
-BiLSTM + MaxPooling for (russian) text classification
+BiLSTM + MaxPooling for text classification
