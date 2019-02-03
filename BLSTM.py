@@ -50,8 +50,6 @@ for sz in phrases_emb:
 
 max_len = max(lenths)
 phrases_emb = sequence.pad_sequences(phrases_emb, maxlen=max_len)
-# Test train split
-x_train, x_test, y_train, y_test = train_test_split(phrases_emb, classes, test_size = 0.2, random_state = 42, stratify=classes)
 
 ### embeddings ###
 
@@ -61,10 +59,10 @@ word_index = tokenizer.word_index
 print('Found %s unique tokens.' % len(word_index))
 
 num_words = min(max_features, len(word_index)) + 1
-print(num_words)
 
 embedding_dim = 300
 embedding_matrix = np.zeros((num_words, embedding_dim))
+
 for word, i in word_index.items():
     if len(word) == 1:
         word = '  '+word+'  '
@@ -80,9 +78,8 @@ F1_data = open('F1_data_file.txt', 'w')
 
 # define 10-fold cross validation test harness
 kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
-cvscores = []
 
-for train, test in kfold.split(texts, classes):
+for train, test in kfold.split(phrases_emb, classes): 
   # create model
     model = Sequential()
     model.add(Embedding(num_words,
@@ -97,23 +94,21 @@ for train, test in kfold.split(texts, classes):
     model.summary()
 
     model.compile(loss = 'sparse_categorical_crossentropy', optimizer='adam' ,metrics = ['accuracy']) 
+    
 
     batch_size = 32 #mini batch is preferable
-    indices = np.arange(0, len(y_train), 1, dtype=np.int32)
+    indices = np.arange(0, len(train), 1, dtype=np.int32)
     np.random.shuffle(indices)
-    history = model.fit(x_train[indices], y_train[indices]-1, epochs=26, batch_size=batch_size, verbose=1, validation_split=0.1)
+    history = model.fit(phrases_emb[train], classes[train]-1, epochs=26, batch_size=batch_size, verbose=1, validation_split=0.1)
     
-    ### F1 metrix ###
-
+    #model F1 evaluate
     class_list = [i for i in range(18)]
-    output = model.predict(x_test)
+    output = model.predict(phrases_emb[test])
+    pred = [np.argmax(output[i]) + 1 for i in range(len(output))]
 
-    y_pred = [np.argmax(output[i]) + 1 for i in range(len(output))]
-
-    f1_macro = f1_score(y_test, y_pred, labels=class_list, average = 'macro' )
-    f1_micro = f1_score(y_test, y_pred, labels=class_list, average = 'micro' )
+    f1_macro = f1_score(classes[test], pred, labels=class_list, average = 'macro' )
+   # f1_micro = f1_score(classes[test], pred, labels=class_list, average = 'micro' )
     print('F1_macro = ',f1_macro)
-    print('F1_micro = ',f1_micro)
     F1_data.write(str(f1_macro))
     F1_data.write("\n")
    
